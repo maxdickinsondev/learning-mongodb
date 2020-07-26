@@ -1,21 +1,27 @@
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
+const authConfig = require('../config/auth.json');
 class AuthController {
   async create(req, res) {
-    const { email } = req.body;
+    const { email, password } = req.body;
 
-    try {
-      if (await User.findOne({ email }))
-        return res.status(400).send({ error: 'User already exists' });
+    const user = await User.findOne({ email }).select('+password');
 
-      const user = await User.create(req.body);
+    if (!user)
+      return res.status(400).json({ error: 'User not found' });
+    
+    if (!await bcrypt.compare(password, user.password))
+      return res.status(400).json({ error: 'Invalid password' });
 
-      user.password = undefined;
+    user.password = undefined;
 
-      return res.send({ user });
-    } catch (err) {
-      return res.status(400).send({ error: 'Registration failed' });
-    }
+    const token = jwt.sign({ id: user._id }, authConfig.secret, {
+      expiresIn: '7d'
+    });
+
+    return res.send({ user, token });
   }
 }
 
