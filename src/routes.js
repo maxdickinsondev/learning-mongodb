@@ -8,6 +8,8 @@ const AuthMiddleware = require('./app/middlewares/auth');
 
 routes.post('/register', RegisterController.create);
 routes.post('/authenticate', AuthController.create);
+routes.post('/forgot_password', AuthController.forgot);
+routes.post('/reset_password', AuthController.reset);
 
 routes.use(AuthMiddleware.middleware);
 
